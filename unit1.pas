@@ -254,6 +254,8 @@ procedure TForm1.ResolveTask(Source: integer);
 type
   TArray6IntValues = array [0..6] of integer;
 var
+  s: string;
+  i, n1, n2, n3: integer;
   m1, m2, m3: array of integer;
   r1: array of TArray6IntValues;
 begin
@@ -262,6 +264,48 @@ begin
   SetLength(m1, max(q1, 1));
   SetLength(m2, max(q2, 1));
   SetLength(m3, max(q3, 1));
+  n1 := 0;
+  n2 := 0;
+  n3 := 0;
+  for i := 0 to (CheckListBox1.Count - 1) do
+  begin
+    if CheckListBox1.Checked[i] then
+    begin
+      try
+        s := CheckListBox1.Items[i];
+        m1[n1] := strtoint(s);
+      except
+        m1[n1] := 0;
+      end;
+      Inc(n1);
+    end;
+  end;
+  for i := 0 to (CheckListBox2.Count - 1) do
+  begin
+    if CheckListBox2.Checked[i] then
+    begin
+      try
+        s := CheckListBox2.Items[i];
+        m2[n2] := strtoint(s);
+      except
+        m2[n2] := 0;
+      end;
+      Inc(n2);
+    end;
+  end;
+  for i := 0 to (CheckListBox3.Count - 1) do
+  begin
+    if CheckListBox3.Checked[i] then
+    begin
+      try
+        s := CheckListBox3.Items[i];
+        m3[n3] := strtoint(s);
+      except
+        m3[n3] := 0;
+      end;
+      Inc(n3);
+    end;
+  end;
   RecalcInProgress := false;
 end;
 
