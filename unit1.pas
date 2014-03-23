@@ -31,6 +31,12 @@ type
     TrackBar1: TTrackBar;
     TrackBar2: TTrackBar;
     TrackBar3: TTrackBar;
+    procedure Button1Click(Sender: TObject);
+    procedure CheckData(Source: integer);
+    procedure CheckListBox1ClickCheck(Sender: TObject);
+    procedure CheckListBox2ClickCheck(Sender: TObject);
+    procedure CheckListBox3ClickCheck(Sender: TObject);
+    procedure ResolveTask(Source: integer);
     procedure FloatSpinEdit1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure RecalcTrackbarPos(Source: integer);
@@ -55,6 +61,7 @@ var
   x1, x2, x3: integer; // x1 + x2 + x3 = 100;
   s1, c1: integer; // s1 / c1 = a1;
   a1: float;
+  q1, q2, q3: integer; // q1, q2, q3 > 0;
 
 implementation
 
@@ -233,6 +240,7 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
+  RecalcInProgress := false;
   RecalcTrackbarPos(1);
   RecalcSpinEditPos(1);
 end;
@@ -240,6 +248,102 @@ end;
 procedure TForm1.FloatSpinEdit1Change(Sender: TObject);
 begin
   RecalcSpinEditPos(3);
+end;
+
+procedure TForm1.ResolveTask(Source: integer);
+type
+  TArray6IntValues = array [0..6] of integer;
+var
+  m1, m2, m3: array of integer;
+  r1: array of TArray6IntValues;
+begin
+  if RecalcInProgress then exit;
+  RecalcInProgress := true;
+  SetLength(m1, max(q1, 1));
+  SetLength(m2, max(q2, 1));
+  SetLength(m3, max(q3, 1));
+  RecalcInProgress := false;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+  if (not RecalcInProgress) then
+  begin
+    CheckData(1);
+    if (q1 > 0) and (q2 > 0) and (q3 > 0) then
+    begin
+      Button1.Enabled := false;
+      CheckListBox1.Enabled := false;
+      CheckListBox2.Enabled := false;
+      CheckListBox3.Enabled := false;
+      StatusBar1.SimpleText := 'Process: Calculating...' + Format(' [%d, %d, %d]', [q1, q2, q3]);
+      ResolveTask(1);
+      StatusBar1.SimpleText := 'Process: Done.' + Format(' [%d, %d, %d]', [q1, q2, q3]);
+      CheckListBox1.Enabled := true;
+      CheckListBox2.Enabled := true;
+      CheckListBox3.Enabled := true;
+      Button1.Enabled := true;
+    end
+    else
+    begin
+      StatusBar1.SimpleText := 'Error: Not enough data to process calculation' + Format(' [%d, %d, %d]', [q1, q2, q3]);
+    end;
+  end
+  else
+  begin
+    StatusBar1.SimpleText := StatusBar1.SimpleText + ' #';
+  end;
+end;
+
+procedure TForm1.CheckData(Source: integer);
+var
+  i: integer;
+begin
+  q1 := 0;
+  q2 := 0;
+  q3 := 0;
+  for i := 0 to (CheckListBox1.Count - 1) do
+  begin
+    if CheckListBox1.Checked[i] then
+      Inc(q1);
+  end;
+  for i := 0 to (CheckListBox2.Count - 1) do
+  begin
+    if CheckListBox2.Checked[i] then
+      Inc(q2);
+  end;
+  for i := 0 to (CheckListBox3.Count - 1) do
+  begin
+    if CheckListBox3.Checked[i] then
+      Inc(q3);
+  end;
+  if (q1 > 0) then
+    Label1.Color := clNone
+  else
+    Label1.Color := clRed;
+  if (q2 > 0) then
+    Label2.Color := clNone
+  else
+    Label2.Color := clRed;
+  if (q3 > 0) then
+    Label3.Color := clNone
+  else
+    Label3.Color := clRed;
+end;
+
+procedure TForm1.CheckListBox1ClickCheck(Sender: TObject);
+begin
+  CheckData(1);
+end;
+
+procedure TForm1.CheckListBox2ClickCheck(Sender: TObject);
+begin
+  CheckData(2);
+end;
+
+procedure TForm1.CheckListBox3ClickCheck(Sender: TObject);
+begin
+  CheckData(3);
 end;
 
 end.
