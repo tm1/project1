@@ -256,7 +256,7 @@ type
   TArray6IntValues = array [0..6] of integer;
 var
   s: string;
-  i, n1, n2, n3, index1, index2, index3, x1, x2, x3, y1, y2, y3: integer;
+  i, n1, n2, n3, index1, index2, index3, x1, x2, x3, y1, y2, y3, r1count, r1index: integer;
   m1, m2, m3: array of integer;
   r1: array of TArray6IntValues;
 begin
@@ -315,7 +315,7 @@ begin
     end;
   end;
   // ShowMessageFmt('count(m3) = %d, m3[last] = %d', [n3, m3[n3 - 1]]);
-  i := 0;
+  r1count := 0;
   SetLength(r1, 0);
   for index1 := 0 to (n1 - 1) do
   begin
@@ -326,19 +326,46 @@ begin
       for index3 := 0 to (n3 - 1) do
       begin
         x3 := m3[index3];
+        y1 := 0;
+        y2 := 0;
+        y3 := 0;
         if FindSolution1(x1, x2, x3, s1, c1, y1, y2, y3) then
         begin
-          SetLength(r1, i + 1);
-          r1[i, 0] := x1;
-          r1[i, 1] := y1;
-          r1[i, 2] := x2;
-          r1[i, 3] := y2;
-          r1[i, 4] := x3;
-          r1[i, 5] := y3;
-          Inc(i);
+          SetLength(r1, r1count + 1);
+          r1[r1count, 0] := x1;
+          r1[r1count, 1] := y1;
+          r1[r1count, 2] := x2;
+          r1[r1count, 3] := y2;
+          r1[r1count, 4] := x3;
+          r1[r1count, 5] := y3;
+          Inc(r1count);
         end;
       end;
     end;
+  end;
+  StringGrid1.ColCount := 7;
+  StringGrid1.RowCount := 1;
+  StringGrid1.Clear;
+  StringGrid1.Rows[0].Clear;
+  StringGrid1.Rows[0].Add('#');
+  StringGrid1.Rows[0].Add('x1');
+  StringGrid1.Rows[0].Add('y1');
+  StringGrid1.Rows[0].Add('x2');
+  StringGrid1.Rows[0].Add('y2');
+  StringGrid1.Rows[0].Add('x3');
+  StringGrid1.Rows[0].Add('y3');
+  StringGrid1.RowCount := r1count + 1;
+  for i := 0 to (r1count - 1) do
+  begin
+    r1index := i + 1;
+    StringGrid1.Rows[r1index].Clear;
+    StringGrid1.Rows[r1index].Add(IntToStr(i));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 0]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 1]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 2]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 3]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 4]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 5]));
   end;
   // ShowMessageFmt('count(r1) = %d, r1[last, 0] = %d, r1[last, 1] = %d', [i, r1[i - 1, 0], r1[i - 1, 1]]);
   RecalcInProgress := false;
