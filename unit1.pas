@@ -37,6 +37,7 @@ type
     procedure CheckListBox2ClickCheck(Sender: TObject);
     procedure CheckListBox3ClickCheck(Sender: TObject);
     procedure ResolveTask(Source: integer);
+    function FindSolution1(const x1, x2, x3, s1, c1: integer; var y1, y2, y3: integer): boolean;
     procedure FloatSpinEdit1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure RecalcTrackbarPos(Source: integer);
@@ -255,11 +256,16 @@ type
   TArray6IntValues = array [0..6] of integer;
 var
   s: string;
-  i, n1, n2, n3: integer;
+  i, n1, n2, n3, index1, index2, index3, x1, x2, x3, y1, y2, y3: integer;
   m1, m2, m3: array of integer;
   r1: array of TArray6IntValues;
 begin
   if RecalcInProgress then exit;
+  if (c1 <= 0) or (c1 > s1) or (s1 <= 0) then
+  begin
+    StatusBar1.SimpleText := 'Error: Can not find solution' + Format(' [%d, %d, %d]', [q1, q2, q3]);
+    exit;
+  end;
   RecalcInProgress := true;
   SetLength(m1, max(q1, 1));
   SetLength(m2, max(q2, 1));
@@ -273,40 +279,78 @@ begin
     begin
       try
         s := CheckListBox1.Items[i];
-        m1[n1] := strtoint(s);
+        m1[n1] := StrToInt(s);
       except
         m1[n1] := 0;
       end;
       Inc(n1);
     end;
   end;
+  // ShowMessageFmt('count(m1) = %d, m1[last] = %d', [n1, m1[n1 - 1]]);
   for i := 0 to (CheckListBox2.Count - 1) do
   begin
     if CheckListBox2.Checked[i] then
     begin
       try
         s := CheckListBox2.Items[i];
-        m2[n2] := strtoint(s);
+        m2[n2] := StrToInt(s);
       except
         m2[n2] := 0;
       end;
       Inc(n2);
     end;
   end;
+  // ShowMessageFmt('count(m2) = %d, m2[last] = %d', [n2, m2[n2 - 1]]);
   for i := 0 to (CheckListBox3.Count - 1) do
   begin
     if CheckListBox3.Checked[i] then
     begin
       try
         s := CheckListBox3.Items[i];
-        m3[n3] := strtoint(s);
+        m3[n3] := StrToInt(s);
       except
         m3[n3] := 0;
       end;
       Inc(n3);
     end;
   end;
+  // ShowMessageFmt('count(m3) = %d, m3[last] = %d', [n3, m3[n3 - 1]]);
+  i := 0;
+  SetLength(r1, 0);
+  for index1 := 0 to (n1 - 1) do
+  begin
+    x1 := m1[index1];
+    for index2 := 0 to (n2 - 1) do
+    begin
+      x2 := m2[index2];
+      for index3 := 0 to (n3 - 1) do
+      begin
+        x3 := m3[index3];
+        if FindSolution1(x1, x2, x3, s1, c1, y1, y2, y3) then
+        begin
+          SetLength(r1, i + 1);
+          r1[i, 0] := x1;
+          r1[i, 1] := y1;
+          r1[i, 2] := x2;
+          r1[i, 3] := y2;
+          r1[i, 4] := x3;
+          r1[i, 5] := y3;
+          Inc(i);
+        end;
+      end;
+    end;
+  end;
+  // ShowMessageFmt('count(r1) = %d, r1[last, 0] = %d, r1[last, 1] = %d', [i, r1[i - 1, 0], r1[i - 1, 1]]);
   RecalcInProgress := false;
+end;
+
+function TForm1.FindSolution1(const x1, x2, x3, s1, c1: integer; var y1, y2, y3: integer): boolean;
+begin
+  // Stub
+  y1 := 1;
+  y2 := 2;
+  y3 := 3;
+  Result := true;
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);
