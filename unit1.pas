@@ -9,6 +9,10 @@ uses
   CheckLst, StdCtrls, Grids, Spin, Math;
 
 type
+  TArray4IntValues = array [0..3] of integer;
+  TDynArray4IntValues = array of TArray4IntValues;
+  TArray7IntValues = array [0..7] of integer;
+  TDynArray7IntValues = array of TArray7IntValues;
 
   { TForm1 }
 
@@ -37,8 +41,8 @@ type
     procedure CheckListBox1ClickCheck(Sender: TObject);
     procedure CheckListBox2ClickCheck(Sender: TObject);
     procedure CheckListBox3ClickCheck(Sender: TObject);
-    procedure ResolveTask(Source: integer);
-    function FindSolution1(const x1, x2, x3, s1, c1: integer; var y1, y2, y3: integer): boolean;
+    function ResolveTask(Source: integer): integer;
+    function FindSolution2(const x1, x2, x3, s1, c1: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
     procedure FloatSpinEdit1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure RecalcTrackbarPos(Source: integer);
@@ -252,15 +256,16 @@ begin
   RecalcSpinEditPos(3);
 end;
 
-procedure TForm1.ResolveTask(Source: integer);
-type
-  TArray6IntValues = array [0..6] of integer;
+function TForm1.ResolveTask(Source: integer): integer;
 var
   s: string;
-  i, n1, n2, n3, index1, index2, index3, x1, x2, x3, y1, y2, y3, r1count, r1index: integer;
+  i, n1, n2, n3, index1, index2, index3, x1, x2, x3, r1count, r1index, r2count: integer;
+  // y1, y2, y3: integer;
   m1, m2, m3: array of integer;
-  r1: array of TArray6IntValues;
+  r1: TDynArray7IntValues;
+  r2: TDynArray4IntValues;
 begin
+  Result := 0;
   if RecalcInProgress then exit;
   if (c1 <= 0) or (c1 > s1) or (s1 <= 0) then
   begin
@@ -327,24 +332,30 @@ begin
       for index3 := 0 to (n3 - 1) do
       begin
         x3 := m3[index3];
-        y1 := 0;
-        y2 := 0;
-        y3 := 0;
-        if FindSolution1(x1, x2, x3, s1, c1, y1, y2, y3) then
+        // y1 := 0;
+        // y2 := 0;
+        // y3 := 0;
+        SetLength(r2, 0);
+        r2count := 0;
+        if FindSolution2(x1, x2, x3, s1, c1, r2, r2count) then
         begin
-          SetLength(r1, r1count + 1);
-          r1[r1count, 0] := x1;
-          r1[r1count, 1] := y1;
-          r1[r1count, 2] := x2;
-          r1[r1count, 3] := y2;
-          r1[r1count, 4] := x3;
-          r1[r1count, 5] := y3;
-          Inc(r1count);
+          for i := 0 to (r2count - 1) do
+          begin
+            SetLength(r1, r1count + 1);
+            r1[r1count, 0] := x1;
+            r1[r1count, 1] := r2[i, 0];
+            r1[r1count, 2] := x2;
+            r1[r1count, 3] := r2[i, 1];
+            r1[r1count, 4] := x3;
+            r1[r1count, 5] := r2[i, 2];
+            r1[r1count, 6] := r2[i, 3];
+            Inc(r1count);
+          end;
         end;
       end;
     end;
   end;
-  StringGrid1.ColCount := 7;
+  StringGrid1.ColCount := 8;
   StringGrid1.RowCount := 1;
   StringGrid1.Clear;
   StringGrid1.Rows[0].Clear;
@@ -355,6 +366,7 @@ begin
   StringGrid1.Rows[0].Add('y2');
   StringGrid1.Rows[0].Add('x3');
   StringGrid1.Rows[0].Add('y3');
+  StringGrid1.Rows[0].Add('mod');
   StringGrid1.RowCount := r1count + 1;
   for i := 0 to (r1count - 1) do
   begin
@@ -367,56 +379,67 @@ begin
     StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 3]));
     StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 4]));
     StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 5]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 6]));
   end;
+  Result := r1count;
   // ShowMessageFmt('count(r1) = %d, r1[last, 0] = %d, r1[last, 1] = %d', [i, r1[i - 1, 0], r1[i - 1, 1]]);
   RecalcInProgress := false;
 end;
 
-function TForm1.FindSolution1(const x1, x2, x3, s1, c1: integer; var y1, y2, y3: integer): boolean;
+function TForm1.FindSolution2(const x1, x2, x3, s1, c1: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
 var
   x1index, x2index, x3index, x1min, x2min, x3min, x1max, x2max, x3max, sum1, sum2, sum3: integer;
 begin
   Result := false;
-  y1 := 0;
-  y2 := 0;
-  y3 := 0;
+  // y1 := 0;
+  // y2 := 0;
+  // y3 := 0;
   x1min := 0;
   x2min := 0;
   x3min := 0;
-  x1max := s1 div x1 + 1;
+  x1max := max(0, s1 div x1 + 1);
   x2max := 0;
   x3max := 0;
   sum1 := 0;
   sum2 := 0;
   sum3 := 0;
+  SetLength(r2, 0);
+  r2count := 0;
   for x1index := x1min to x1max do
   begin
     sum1 := x1index * x1;
-    x2max := (s1 - sum1) div x2 + 1;
+    x2max := max(0, (s1 - sum1) div x2 + 1);
     for x2index := x2min to x2max do
     begin
       sum2 := x2index * x2;
-      x3min := (s1 - sum1 - sum2) div x3 - 1;
-      x3max := (s1 - sum1 - sum2) div x3 + 1;
+      x3min := max(0, (s1 - sum1 - sum2) div x3 - 1);
+      x3max := max(0, (s1 - sum1 - sum2) div x3 + 1);
       for x3index := x3min to x3max do
       begin
         sum3 := x3index * x3;
         if (s1 = sum1 + sum2 + sum3) and (c1 = x1index + x2index + x3index) then
         begin
-          y1 := x1index;
-          y2 := x2index;
-          y3 := x3index;
-          Result := true;
-          if Result then break;
+          SetLength(r2, r2count + 1);
+          r2[r2count, 0] := x1index;
+          r2[r2count, 1] := x2index;
+          r2[r2count, 2] := x3index;
+          r2[r2count, 3] := 0;
+          Inc(r2count);
+          // Result := true;
+          // if Result then break;
         end;
       end;
-      if Result then break;
+      // if Result then break;
     end;
-    if Result then break;
+    // if Result then break;
   end;
+  if r2count > 0 then
+    Result := true;
 end;
 
 procedure TForm1.CheckTask(Source: integer);
+var
+  r1count: integer;
 begin
   if (not RecalcInProgress) then
   begin
@@ -428,8 +451,8 @@ begin
       CheckListBox2.Enabled := false;
       CheckListBox3.Enabled := false;
       StatusBar1.SimpleText := 'Process: Calculating...' + Format(' [%d, %d, %d]', [q1, q2, q3]);
-      ResolveTask(1);
-      StatusBar1.SimpleText := 'Process: Done.' + Format(' [%d, %d, %d]', [q1, q2, q3]);
+      r1count := ResolveTask(1);
+      StatusBar1.SimpleText := 'Process: Done.' + Format(' [%d, %d, %d]. Count = %d', [q1, q2, q3, r1count]);
       CheckListBox1.Enabled := true;
       CheckListBox2.Enabled := true;
       CheckListBox3.Enabled := true;
