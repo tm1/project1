@@ -32,6 +32,7 @@ type
     TrackBar2: TTrackBar;
     TrackBar3: TTrackBar;
     procedure Button1Click(Sender: TObject);
+    procedure CheckTask(Source: integer);
     procedure CheckData(Source: integer);
     procedure CheckListBox1ClickCheck(Sender: TObject);
     procedure CheckListBox2ClickCheck(Sender: TObject);
@@ -372,15 +373,50 @@ begin
 end;
 
 function TForm1.FindSolution1(const x1, x2, x3, s1, c1: integer; var y1, y2, y3: integer): boolean;
+var
+  x1index, x2index, x3index, x1min, x2min, x3min, x1max, x2max, x3max, sum1, sum2, sum3: integer;
 begin
-  // Stub
-  y1 := 1;
-  y2 := 2;
-  y3 := 3;
-  Result := true;
+  Result := false;
+  y1 := 0;
+  y2 := 0;
+  y3 := 0;
+  x1min := 0;
+  x2min := 0;
+  x3min := 0;
+  x1max := s1 div x1 + 1;
+  x2max := 0;
+  x3max := 0;
+  sum1 := 0;
+  sum2 := 0;
+  sum3 := 0;
+  for x1index := x1min to x1max do
+  begin
+    sum1 := x1index * x1;
+    x2max := (s1 - sum1) div x2 + 1;
+    for x2index := x2min to x2max do
+    begin
+      sum2 := x2index * x2;
+      x3min := (s1 - sum1 - sum2) div x3 - 1;
+      x3max := (s1 - sum1 - sum2) div x3 + 1;
+      for x3index := x3min to x3max do
+      begin
+        sum3 := x3index * x3;
+        if (s1 = sum1 + sum2 + sum3) and (c1 = x1index + x2index + x3index) then
+        begin
+          y1 := x1index;
+          y2 := x2index;
+          y3 := x3index;
+          Result := true;
+          if Result then break;
+        end;
+      end;
+      if Result then break;
+    end;
+    if Result then break;
+  end;
 end;
 
-procedure TForm1.Button1Click(Sender: TObject);
+procedure TForm1.CheckTask(Source: integer);
 begin
   if (not RecalcInProgress) then
   begin
@@ -408,6 +444,11 @@ begin
   begin
     StatusBar1.SimpleText := StatusBar1.SimpleText + ' #';
   end;
+end;
+
+procedure TForm1.Button1Click(Sender: TObject);
+begin
+  CheckTask(1);
 end;
 
 procedure TForm1.CheckData(Source: integer);
@@ -448,17 +489,17 @@ end;
 
 procedure TForm1.CheckListBox1ClickCheck(Sender: TObject);
 begin
-  CheckData(1);
+  CheckTask(1);
 end;
 
 procedure TForm1.CheckListBox2ClickCheck(Sender: TObject);
 begin
-  CheckData(2);
+  CheckTask(2);
 end;
 
 procedure TForm1.CheckListBox3ClickCheck(Sender: TObject);
 begin
-  CheckData(3);
+  CheckTask(3);
 end;
 
 end.
