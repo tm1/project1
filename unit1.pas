@@ -41,7 +41,8 @@ type
     procedure CheckListBox1ClickCheck(Sender: TObject);
     procedure CheckListBox2ClickCheck(Sender: TObject);
     procedure CheckListBox3ClickCheck(Sender: TObject);
-    function ResolveTask(Source: integer): integer;
+    procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues);
+    function ResolveTask(Source: integer; var r1count: integer; var r1: TDynArray7IntValues): integer;
     function FindSolution2(const x1, x2, x3, s1, c1: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
     procedure FloatSpinEdit1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -58,6 +59,7 @@ type
   private
     { private declarations }
     RecalcInProgress: boolean;
+    ResultFound: boolean;
   public
     { public declarations }
   end;
@@ -68,6 +70,8 @@ var
   s1, c1: integer; // s1 / c1 = a1;
   a1: float;
   q1, q2, q3: integer; // q1, q2, q3 > 0;
+  r1matrix: TDynArray7IntValues;
+  r1size: integer;
 
 implementation
 
@@ -170,6 +174,7 @@ begin
       x3 := prc3;
   end;
   RecalcInProgress := false;
+  ShowMatrix(r1size, r1matrix);
 end;
 
 procedure TForm1.RecalcSpinEditPos(Source: integer);
@@ -247,6 +252,7 @@ end;
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   RecalcInProgress := false;
+  ResultFound := false;
   RecalcTrackbarPos(1);
   RecalcSpinEditPos(1);
 end;
@@ -256,16 +262,49 @@ begin
   RecalcSpinEditPos(3);
 end;
 
-function TForm1.ResolveTask(Source: integer): integer;
+procedure TForm1.ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues);
+var
+  i, r1index: integer;
+begin
+  if not ResultFound then exit;
+  StringGrid1.ColCount := 8;
+  StringGrid1.RowCount := 1;
+  StringGrid1.Clear;
+  StringGrid1.Rows[0].Clear;
+  StringGrid1.Rows[0].Add('#');
+  StringGrid1.Rows[0].Add('x1');
+  StringGrid1.Rows[0].Add('y1');
+  StringGrid1.Rows[0].Add('x2');
+  StringGrid1.Rows[0].Add('y2');
+  StringGrid1.Rows[0].Add('x3');
+  StringGrid1.Rows[0].Add('y3');
+  StringGrid1.Rows[0].Add('mod');
+  StringGrid1.RowCount := r1count + 1;
+  for i := 0 to (r1count - 1) do
+  begin
+    r1index := i + 1;
+    StringGrid1.Rows[r1index].Clear;
+    StringGrid1.Rows[r1index].Add(IntToStr(i));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 0]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 1]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 2]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 3]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 4]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 5]));
+    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 6]));
+  end;
+end;
+
+function TForm1.ResolveTask(Source: integer; var r1count: integer; var r1: TDynArray7IntValues): integer;
 var
   s: string;
-  i, n1, n2, n3, index1, index2, index3, x1, x2, x3, r1count, r1index, r2count: integer;
+  i, n1, n2, n3, index1, index2, index3, x1, x2, x3, r2count: integer;
   // y1, y2, y3: integer;
   m1, m2, m3: array of integer;
-  r1: TDynArray7IntValues;
   r2: TDynArray4IntValues;
 begin
   Result := 0;
+  ResultFound := false;
   if RecalcInProgress then exit;
   if (c1 <= 0) or (c1 > s1) or (s1 <= 0) then
   begin
@@ -355,32 +394,8 @@ begin
       end;
     end;
   end;
-  StringGrid1.ColCount := 8;
-  StringGrid1.RowCount := 1;
-  StringGrid1.Clear;
-  StringGrid1.Rows[0].Clear;
-  StringGrid1.Rows[0].Add('#');
-  StringGrid1.Rows[0].Add('x1');
-  StringGrid1.Rows[0].Add('y1');
-  StringGrid1.Rows[0].Add('x2');
-  StringGrid1.Rows[0].Add('y2');
-  StringGrid1.Rows[0].Add('x3');
-  StringGrid1.Rows[0].Add('y3');
-  StringGrid1.Rows[0].Add('mod');
-  StringGrid1.RowCount := r1count + 1;
-  for i := 0 to (r1count - 1) do
-  begin
-    r1index := i + 1;
-    StringGrid1.Rows[r1index].Clear;
-    StringGrid1.Rows[r1index].Add(IntToStr(i));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 0]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 1]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 2]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 3]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 4]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 5]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 6]));
-  end;
+  ResultFound := true;
+  ShowMatrix(r1count, r1);
   Result := r1count;
   // ShowMessageFmt('count(r1) = %d, r1[last, 0] = %d, r1[last, 1] = %d', [i, r1[i - 1, 0], r1[i - 1, 1]]);
   RecalcInProgress := false;
@@ -451,7 +466,7 @@ begin
       CheckListBox2.Enabled := false;
       CheckListBox3.Enabled := false;
       StatusBar1.SimpleText := 'Process: Calculating...' + Format(' [%d, %d, %d]', [q1, q2, q3]);
-      r1count := ResolveTask(1);
+      r1count := ResolveTask(1, r1size, r1matrix);
       StatusBar1.SimpleText := 'Process: Done.' + Format(' [%d, %d, %d]. Count = %d', [q1, q2, q3, r1count]);
       CheckListBox1.Enabled := true;
       CheckListBox2.Enabled := true;
