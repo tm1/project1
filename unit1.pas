@@ -41,7 +41,7 @@ type
     procedure CheckListBox1ClickCheck(Sender: TObject);
     procedure CheckListBox2ClickCheck(Sender: TObject);
     procedure CheckListBox3ClickCheck(Sender: TObject);
-    procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues);
+    procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent: boolean; var mp1: integer);
     function ResolveTask(Source: integer; var r1count: integer; var r1: TDynArray7IntValues): integer;
     function FindSolution2(const x1, x2, x3, s1, c1: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
     procedure FloatSpinEdit1Change(Sender: TObject);
@@ -71,7 +71,8 @@ var
   a1: float;
   q1, q2, q3: integer; // q1, q2, q3 > 0;
   r1matrix: TDynArray7IntValues;
-  r1size: integer;
+  r1size, r1matches: integer;
+  diff1: integer;
 
 implementation
 
@@ -173,8 +174,9 @@ begin
       SpinEdit3.Value := round(prc3 * max3 / 100);;
       x3 := prc3;
   end;
+  ShowMatrix(r1size, r1matrix, x1, x2, x3, true, r1matches);
+  StatusBar1.SimpleText := 'Process: Done.' + Format(' [%d, %d, %d]. Count = %d, Matches = %d', [q1, q2, q3, r1size, r1matches]);
   RecalcInProgress := false;
-  ShowMatrix(r1size, r1matrix);
 end;
 
 procedure TForm1.RecalcSpinEditPos(Source: integer);
@@ -253,6 +255,10 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   RecalcInProgress := false;
   ResultFound := false;
+  SetLength(r1matrix, 0);
+  r1size := 0;
+  r1matches := 0;
+  diff1 := 5;
   RecalcTrackbarPos(1);
   RecalcSpinEditPos(1);
 end;
@@ -262,9 +268,11 @@ begin
   RecalcSpinEditPos(3);
 end;
 
-procedure TForm1.ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues);
+procedure TForm1.ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent: boolean; var mp1: integer);
 var
   i, r1index: integer;
+  str1: string;
+  found1: boolean;
 begin
   if not ResultFound then exit;
   StringGrid1.ColCount := 8;
@@ -280,11 +288,52 @@ begin
   StringGrid1.Rows[0].Add('y3');
   StringGrid1.Rows[0].Add('mod');
   StringGrid1.RowCount := r1count + 1;
+  mp1 := 0;
   for i := 0 to (r1count - 1) do
   begin
     r1index := i + 1;
     StringGrid1.Rows[r1index].Clear;
-    StringGrid1.Rows[r1index].Add(IntToStr(i));
+    str1 := IntToStr(i);
+    if ShowPercent then
+    begin
+      found1 := false;
+      if (r1[i, 1] > 0) then
+      begin
+        if (abs(round(c1 / r1[i, 1] * 100) - prc1) <= diff1) then
+        found1 := true;
+      end
+      else
+      begin
+        if (prc1 <= diff1) then
+        found1 := true;
+      end;
+      if (r1[i, 3] > 0) then
+      begin
+        if (abs(round(c1 / r1[i, 3] * 100) - prc2) <= diff1) then
+        found1 := true;
+      end
+      else
+      begin
+        if (prc2 <= diff1) then
+        found1 := true;
+      end;
+      if (r1[i, 5] > 0) then
+      begin
+        if (abs(round(c1 / r1[i, 5] * 100) - prc3) <= diff1) then
+        found1 := true;
+      end
+      else
+      begin
+        if (prc3 <= diff1) then
+        found1 := true;
+      end;
+      if found1 then
+      begin
+        str1 := str1 + ' ***';
+        Inc(mp1);
+      end;
+    end;
+    StringGrid1.Rows[r1index].Add(str1);
     StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 0]));
     StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 1]));
     StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 2]));
@@ -395,7 +444,6 @@ begin
     end;
   end;
   ResultFound := true;
-  ShowMatrix(r1count, r1);
   Result := r1count;
   // ShowMessageFmt('count(r1) = %d, r1[last, 0] = %d, r1[last, 1] = %d', [i, r1[i - 1, 0], r1[i - 1, 1]]);
   RecalcInProgress := false;
@@ -453,8 +501,6 @@ begin
 end;
 
 procedure TForm1.CheckTask(Source: integer);
-var
-  r1count: integer;
 begin
   if (not RecalcInProgress) then
   begin
@@ -466,8 +512,9 @@ begin
       CheckListBox2.Enabled := false;
       CheckListBox3.Enabled := false;
       StatusBar1.SimpleText := 'Process: Calculating...' + Format(' [%d, %d, %d]', [q1, q2, q3]);
-      r1count := ResolveTask(1, r1size, r1matrix);
-      StatusBar1.SimpleText := 'Process: Done.' + Format(' [%d, %d, %d]. Count = %d', [q1, q2, q3, r1count]);
+      ResolveTask(1, r1size, r1matrix);
+      ShowMatrix(r1size, r1matrix, x1, x2, x3, true, r1matches);
+      StatusBar1.SimpleText := 'Process: Done.' + Format(' [%d, %d, %d]. Count = %d, Matches = %d', [q1, q2, q3, r1size, r1matches]);
       CheckListBox1.Enabled := true;
       CheckListBox2.Enabled := true;
       CheckListBox3.Enabled := true;
