@@ -18,6 +18,7 @@ type
 
   TForm1 = class(TForm)
     Button1: TButton;
+    CheckBox1: TCheckBox;
     CheckListBox1: TCheckListBox;
     CheckListBox2: TCheckListBox;
     CheckListBox3: TCheckListBox;
@@ -25,23 +26,26 @@ type
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
+    ProgressBar1: TProgressBar;
     SpinEdit1: TSpinEdit;
     SpinEdit2: TSpinEdit;
     SpinEdit3: TSpinEdit;
     SpinEdit4: TSpinEdit;
     SpinEdit5: TSpinEdit;
+    SpinEdit6: TSpinEdit;
     StatusBar1: TStatusBar;
     StringGrid1: TStringGrid;
     TrackBar1: TTrackBar;
     TrackBar2: TTrackBar;
     TrackBar3: TTrackBar;
     procedure Button1Click(Sender: TObject);
+    procedure CheckBox1Change(Sender: TObject);
     procedure CheckTask(Source: integer);
     procedure CheckData(Source: integer);
     procedure CheckListBox1ClickCheck(Sender: TObject);
     procedure CheckListBox2ClickCheck(Sender: TObject);
     procedure CheckListBox3ClickCheck(Sender: TObject);
-    procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent: boolean; var mp1: integer);
+    procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent, ShowPercentOnly: boolean; var mp1: integer);
     function ResolveTask(Source: integer; var r1count: integer; var r1: TDynArray7IntValues): integer;
     function FindSolution2(const x1, x2, x3, s1, c1: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
     procedure FloatSpinEdit1Change(Sender: TObject);
@@ -53,6 +57,7 @@ type
     procedure SpinEdit3Change(Sender: TObject);
     procedure SpinEdit4Change(Sender: TObject);
     procedure SpinEdit5Change(Sender: TObject);
+    procedure SpinEdit6Change(Sender: TObject);
     procedure TrackBar1Change(Sender: TObject);
     procedure TrackBar2Change(Sender: TObject);
     procedure TrackBar3Change(Sender: TObject);
@@ -73,6 +78,7 @@ var
   r1matrix: TDynArray7IntValues;
   r1size, r1matches: integer;
   diff1: integer;
+  diff1show: boolean;
 
 implementation
 
@@ -86,6 +92,8 @@ var
 begin
   if RecalcInProgress then exit;
   RecalcInProgress := true;
+  diff1show := CheckBox1.Checked;
+  diff1 := SpinEdit6.Value;
   case Source of
     1, 2, 3: begin
       pos1 := TrackBar1.Position;
@@ -96,8 +104,8 @@ begin
       max1 := SpinEdit1.MaxValue;
     end;
     else
-      pos1 := 100;
-      max1 := 100;
+      pos1 := TrackBar1.Position;
+      max1 := TrackBar1.Max;
   end;
   prc1 := abs(round(100 * pos1 / max1));
   x1 := prc1;
@@ -124,8 +132,8 @@ begin
       max2 := SpinEdit3.MaxValue;
     end;
     else
-      pos2 := 0;
-      max2 := 100;
+      pos2 := TrackBar2.Position;
+      max2 := TrackBar2.Max;
   end;
   prc2 := min(abs(round(pos2 / max2 * 100)), delta1);
   case Source of
@@ -174,7 +182,7 @@ begin
       SpinEdit3.Value := round(prc3 * max3 / 100);;
       x3 := prc3;
   end;
-  ShowMatrix(r1size, r1matrix, x1, x2, x3, true, r1matches);
+  ShowMatrix(r1size, r1matrix, x1, x2, x3, true, diff1show, r1matches);
   StatusBar1.SimpleText := 'Process: Done.' + Format(' [%d, %d, %d]. Count = %d, Matches = %d', [q1, q2, q3, r1size, r1matches]);
   RecalcInProgress := false;
 end;
@@ -236,6 +244,11 @@ begin
   RecalcSpinEditPos(2);
 end;
 
+procedure TForm1.SpinEdit6Change(Sender: TObject);
+begin
+  RecalcTrackbarPos(8);
+end;
+
 procedure TForm1.TrackBar1Change(Sender: TObject);
 begin
   RecalcTrackbarPos(1);
@@ -259,6 +272,7 @@ begin
   r1size := 0;
   r1matches := 0;
   diff1 := 5;
+  diff1show := false;
   RecalcTrackbarPos(1);
   RecalcSpinEditPos(1);
 end;
@@ -268,13 +282,16 @@ begin
   RecalcSpinEditPos(3);
 end;
 
-procedure TForm1.ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent: boolean; var mp1: integer);
+procedure TForm1.ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent, ShowPercentOnly: boolean; var mp1: integer);
 var
   i, r1index: integer;
   str1: string;
-  found1: boolean;
+  found1, found2, found3: boolean;
 begin
   if not ResultFound then exit;
+  found1 := false;
+  found2 := false;
+  found3 := false;
   StringGrid1.ColCount := 8;
   StringGrid1.RowCount := 1;
   StringGrid1.Clear;
@@ -287,19 +304,21 @@ begin
   StringGrid1.Rows[0].Add('x3');
   StringGrid1.Rows[0].Add('y3');
   StringGrid1.Rows[0].Add('mod');
-  StringGrid1.RowCount := r1count + 1;
+  if not ShowPercentOnly then
+    StringGrid1.RowCount := r1count + 1;
   mp1 := 0;
+  r1index := 0;
   for i := 0 to (r1count - 1) do
   begin
-    r1index := i + 1;
-    StringGrid1.Rows[r1index].Clear;
     str1 := IntToStr(i);
     if ShowPercent then
     begin
       found1 := false;
+      found2 := false;
+      found3 := false;
       if (r1[i, 1] > 0) then
       begin
-        if (abs(round(c1 / r1[i, 1] * 100) - prc1) <= diff1) then
+        if (abs(round(r1[i, 1] / c1 * 100) - prc1) <= diff1) then
         found1 := true;
       end
       else
@@ -309,38 +328,45 @@ begin
       end;
       if (r1[i, 3] > 0) then
       begin
-        if (abs(round(c1 / r1[i, 3] * 100) - prc2) <= diff1) then
-        found1 := true;
+        if (abs(round(r1[i, 3] / c1 * 100) - prc2) <= diff1) then
+        found2 := true;
       end
       else
       begin
         if (prc2 <= diff1) then
-        found1 := true;
+        found2 := true;
       end;
       if (r1[i, 5] > 0) then
       begin
-        if (abs(round(c1 / r1[i, 5] * 100) - prc3) <= diff1) then
-        found1 := true;
+        if (abs(round(r1[i, 5] / c1 * 100) - prc3) <= diff1) then
+        found3 := true;
       end
       else
       begin
         if (prc3 <= diff1) then
-        found1 := true;
+        found3 := true;
       end;
-      if found1 then
+      if (found1 and found2 and found3) then
       begin
         str1 := str1 + ' ***';
         Inc(mp1);
       end;
     end;
-    StringGrid1.Rows[r1index].Add(str1);
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 0]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 1]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 2]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 3]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 4]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 5]));
-    StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 6]));
+    if (not ShowPercentOnly) or (ShowPercentOnly and found1 and found2 and found3) then
+    begin
+      Inc(r1index);
+      if ShowPercentOnly then
+        StringGrid1.RowCount := r1index + 1;
+      StringGrid1.Rows[r1index].Clear;
+      StringGrid1.Rows[r1index].Add(str1);
+      StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 0]));
+      StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 1]));
+      StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 2]));
+      StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 3]));
+      StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 4]));
+      StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 5]));
+      StringGrid1.Rows[r1index].Add(IntToStr(r1[i, 6]));
+    end;
   end;
 end;
 
@@ -513,7 +539,7 @@ begin
       CheckListBox3.Enabled := false;
       StatusBar1.SimpleText := 'Process: Calculating...' + Format(' [%d, %d, %d]', [q1, q2, q3]);
       ResolveTask(1, r1size, r1matrix);
-      ShowMatrix(r1size, r1matrix, x1, x2, x3, true, r1matches);
+      ShowMatrix(r1size, r1matrix, x1, x2, x3, true, diff1show, r1matches);
       StatusBar1.SimpleText := 'Process: Done.' + Format(' [%d, %d, %d]. Count = %d, Matches = %d', [q1, q2, q3, r1size, r1matches]);
       CheckListBox1.Enabled := true;
       CheckListBox2.Enabled := true;
@@ -534,6 +560,11 @@ end;
 procedure TForm1.Button1Click(Sender: TObject);
 begin
   CheckTask(1);
+end;
+
+procedure TForm1.CheckBox1Change(Sender: TObject);
+begin
+  RecalcTrackbarPos(7);
 end;
 
 procedure TForm1.CheckData(Source: integer);
