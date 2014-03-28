@@ -18,6 +18,8 @@ type
 
   TForm1 = class(TForm)
     Button1: TButton;
+    Button2: TButton;
+    Button3: TButton;
     CheckBox1: TCheckBox;
     CheckListBox1: TCheckListBox;
     CheckListBox2: TCheckListBox;
@@ -27,6 +29,7 @@ type
     Label2: TLabel;
     Label3: TLabel;
     ProgressBar1: TProgressBar;
+    SaveDialog1: TSaveDialog;
     SpinEdit1: TSpinEdit;
     SpinEdit2: TSpinEdit;
     SpinEdit3: TSpinEdit;
@@ -39,12 +42,15 @@ type
     TrackBar2: TTrackBar;
     TrackBar3: TTrackBar;
     procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
     procedure CheckBox1Change(Sender: TObject);
     procedure CheckTask(Source: integer);
     procedure CheckData(Source: integer);
     procedure CheckListBox1ClickCheck(Sender: TObject);
     procedure CheckListBox2ClickCheck(Sender: TObject);
     procedure CheckListBox3ClickCheck(Sender: TObject);
+    procedure FileSave(Source: integer);
     procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent, ShowPercentOnly: boolean; var mp1: integer);
     function ResolveTask(Source: integer; var r1count: integer; var r1: TDynArray7IntValues): integer;
     function FindSolution2(const x1, x2, x3, s1, c1: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
@@ -79,6 +85,7 @@ var
   r1size, r1matches: integer;
   diff1: integer;
   diff1show: boolean;
+  filename1: string;
 
 implementation
 
@@ -273,6 +280,7 @@ begin
   r1matches := 0;
   diff1 := 5;
   diff1show := false;
+  filename1 := '';
   RecalcTrackbarPos(1);
   RecalcSpinEditPos(1);
 end;
@@ -292,9 +300,9 @@ begin
   found1 := false;
   found2 := false;
   found3 := false;
+  StringGrid1.Clear;
   StringGrid1.ColCount := 8;
   StringGrid1.RowCount := 1;
-  StringGrid1.Clear;
   StringGrid1.Rows[0].Clear;
   StringGrid1.Rows[0].Add('#');
   StringGrid1.Rows[0].Add('x1');
@@ -377,6 +385,7 @@ var
   // y1, y2, y3: integer;
   m1, m2, m3: array of integer;
   r2: TDynArray4IntValues;
+  progress1: integer;
 begin
   Result := 0;
   ResultFound := false;
@@ -436,6 +445,10 @@ begin
   end;
   // ShowMessageFmt('count(m3) = %d, m3[last] = %d', [n3, m3[n3 - 1]]);
   r1count := 0;
+  progress1 := 0;
+  ProgressBar1.Position := progress1;
+  ProgressBar1.Min := 0;
+  ProgressBar1.Max := 100;
   SetLength(r1, 0);
   for index1 := 0 to (n1 - 1) do
   begin
@@ -451,6 +464,11 @@ begin
         // y3 := 0;
         SetLength(r2, 0);
         r2count := 0;
+        progress1 := round((index1 * n3 * n2 + index2 * n3 + index3 ) / (n1 * n2 * n3) * 100);
+        if (progress1 mod 1 = 0) then
+        begin
+          ProgressBar1.Position := progress1;
+        end;
         if FindSolution2(x1, x2, x3, s1, c1, r2, r2count) then
         begin
           for i := 0 to (r2count - 1) do
@@ -559,7 +577,17 @@ end;
 
 procedure TForm1.Button1Click(Sender: TObject);
 begin
-  CheckTask(1);
+  CheckTask(3);
+end;
+
+procedure TForm1.Button2Click(Sender: TObject);
+begin
+  FileSave(1);
+end;
+
+procedure TForm1.Button3Click(Sender: TObject);
+begin
+  FileSave(2);
 end;
 
 procedure TForm1.CheckBox1Change(Sender: TObject);
@@ -616,6 +644,70 @@ end;
 procedure TForm1.CheckListBox3ClickCheck(Sender: TObject);
 begin
   CheckTask(3);
+end;
+
+procedure TForm1.FileSave(Source: integer);
+var
+  i: integer;
+  f1: THandle;
+  termchar1: Char;
+  fmt1, s1, s2, termline1: string;
+  buf1: PChar;
+begin
+  if (Length(filename1) = 0) or (Source = 2) then
+  begin
+    if (Length(filename1) = 0) then
+      filename1 := 'result1.csv';
+    SaveDialog1.FileName := filename1;
+    if SaveDialog1.Execute then
+      filename1 := SaveDialog1.FileName;
+  end;
+  f1 := 0;
+  if (Length(filename1) > 0) and (StringGrid1.RowCount > 1) then
+  begin
+    if FileExists(filename1) then
+    begin
+      // f1 := FileOpen(filename1, fmOpenReadWrite + fmShareDenyWrite);
+      ShowMessageFmt('Error: File already exists - [ %s ]', [filename1]);
+      exit;
+    end
+    else
+    begin
+      f1 := FileCreate(filename1);
+    end;
+    if (LongInt(f1) = -1) then
+    begin
+      ShowMessageFmt('Error: Can not save to file - [ %s ]', [filename1]);
+      exit;
+    end
+    else
+    begin
+      termchar1 := ';'; // ;
+      // termchar1 := Char(#9); // Tab
+      termline1 := Char(#13) + Char(#10); // CRLF
+      // fmt1 := '%s' + termchar1 + '%s' + termchar1 + '%s' + termchar1 + '%s' + termchar1 + '%s' + termchar1 + '%s' + termchar1 + '%s' + termline1;
+      fmt1 := '%s' + termchar1 + termline1;
+      s1 := '';
+      try
+        FileSeek(f1, 0, fsFromBeginning);
+        for i := 0 to (StringGrid1.RowCount - 1) do
+        begin
+          StringGrid1.Rows[i].Delimiter := termchar1;
+          StringGrid1.Rows[i].QuoteChar := '"';
+          s1 := StringGrid1.Rows[i].DelimitedText;
+          s2 := Format(fmt1, [s1]);
+          // ShowMessageFmt('StringGrid1.Rows[%d].Text - [ %s ]', [i, s2]);
+          buf1 := PChar(s2);
+          if not (FileWrite(f1, buf1^, Length(buf1)) = Length(buf1)) then
+            StatusBar1.SimpleText := Format('Error: StringGrid1.Rows[%d].Text - [ %s ]', [i, s2]);
+        end;
+      finally
+        FileClose(f1);
+      end;
+    end;
+  end
+  else
+    ShowMessageFmt('Error: No results to save to file - [ %s ]', [filename1]);
 end;
 
 end.

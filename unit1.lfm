@@ -246,7 +246,7 @@ object Form1: TForm1
     Top = 376
     Width = 75
     Anchors = [akLeft, akBottom]
-    Caption = '&Save'
+    Caption = '&Process'
     OnClick = Button1Click
     TabOrder = 13
   end
@@ -260,12 +260,12 @@ object Form1: TForm1
     TabOrder = 15
   end
   object ProgressBar1: TProgressBar
-    Left = 445
+    Left = 552
     Height = 20
-    Top = 378
-    Width = 443
+    Top = 415
+    Width = 336
     Anchors = [akTop, akLeft, akRight]
-    TabOrder = 16
+    TabOrder = 19
   end
   object SpinEdit6: TSpinEdit
     Left = 445
@@ -273,7 +273,33 @@ object Form1: TForm1
     Top = 415
     Width = 90
     OnChange = SpinEdit6Change
-    TabOrder = 17
+    TabOrder = 16
     Value = 5
+  end
+  object Button2: TButton
+    Left = 445
+    Height = 25
+    Top = 376
+    Width = 75
+    Anchors = [akLeft, akBottom]
+    Caption = '&Save'
+    OnClick = Button2Click
+    TabOrder = 17
+  end
+  object Button3: TButton
+    Left = 552
+    Height = 25
+    Top = 376
+    Width = 75
+    Anchors = [akLeft, akBottom]
+    Caption = 'Save &as'
+    OnClick = Button3Click
+    TabOrder = 18
+  end
+  object SaveDialog1: TSaveDialog
+    Title = 'Save file as'
+    Filter = 'CSV (*.csv)|*.csv|All (*.*)|*.*'
+    left = 776
+    top = 8
   end
 end
