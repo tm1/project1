@@ -36,6 +36,7 @@ type
     SpinEdit4: TSpinEdit;
     SpinEdit5: TSpinEdit;
     SpinEdit6: TSpinEdit;
+    SpinEdit7: TSpinEdit;
     StatusBar1: TStatusBar;
     StringGrid1: TStringGrid;
     TrackBar1: TTrackBar;
@@ -53,7 +54,7 @@ type
     procedure FileSave(Source: integer);
     procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent, ShowPercentOnly: boolean; var mp1: integer);
     function ResolveTask(Source: integer; var r1count: integer; var r1: TDynArray7IntValues): integer;
-    function FindSolution2(const x1, x2, x3, s1, c1: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
+    function FindSolution2(const x1, x2, x3, s1, c1, s1diff: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
     procedure FloatSpinEdit1Change(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure RecalcTrackbarPos(Source: integer);
@@ -64,6 +65,7 @@ type
     procedure SpinEdit4Change(Sender: TObject);
     procedure SpinEdit5Change(Sender: TObject);
     procedure SpinEdit6Change(Sender: TObject);
+    procedure SpinEdit7Change(Sender: TObject);
     procedure TrackBar1Change(Sender: TObject);
     procedure TrackBar2Change(Sender: TObject);
     procedure TrackBar3Change(Sender: TObject);
@@ -83,7 +85,7 @@ var
   q1, q2, q3: integer; // q1, q2, q3 > 0;
   r1matrix: TDynArray7IntValues;
   r1size, r1matches: integer;
-  diff1: integer;
+  diff1, diff2: integer;
   diff1show: boolean;
   filename1: string;
 
@@ -256,6 +258,11 @@ begin
   RecalcTrackbarPos(8);
 end;
 
+procedure TForm1.SpinEdit7Change(Sender: TObject);
+begin
+  CheckTask(4);
+end;
+
 procedure TForm1.TrackBar1Change(Sender: TObject);
 begin
   RecalcTrackbarPos(1);
@@ -280,6 +287,7 @@ begin
   r1matches := 0;
   diff1 := 5;
   diff1show := false;
+  diff2 := 0;
   filename1 := '';
   RecalcTrackbarPos(1);
   RecalcSpinEditPos(1);
@@ -469,7 +477,7 @@ begin
         begin
           ProgressBar1.Position := progress1;
         end;
-        if FindSolution2(x1, x2, x3, s1, c1, r2, r2count) then
+        if FindSolution2(x1, x2, x3, s1, c1, diff2, r2, r2count) then
         begin
           for i := 0 to (r2count - 1) do
           begin
@@ -493,7 +501,7 @@ begin
   RecalcInProgress := false;
 end;
 
-function TForm1.FindSolution2(const x1, x2, x3, s1, c1: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
+function TForm1.FindSolution2(const x1, x2, x3, s1, c1, s1diff: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
 var
   x1index, x2index, x3index, x1min, x2min, x3min, x1max, x2max, x3max, sum1, sum2, sum3: integer;
 begin
@@ -524,13 +532,13 @@ begin
       for x3index := x3min to x3max do
       begin
         sum3 := x3index * x3;
-        if (s1 = sum1 + sum2 + sum3) and (c1 = x1index + x2index + x3index) then
+        if (s1 - (sum1 + sum2 + sum3) = - s1diff) and (s1 - (sum1 + sum2 + sum3) <= 0) and (c1 = x1index + x2index + x3index) then
         begin
           SetLength(r2, r2count + 1);
           r2[r2count, 0] := x1index;
           r2[r2count, 1] := x2index;
           r2[r2count, 2] := x3index;
-          r2[r2count, 3] := 0;
+          r2[r2count, 3] := s1 - (sum1 + sum2 + sum3);
           Inc(r2count);
           // Result := true;
           // if Result then break;
@@ -629,6 +637,7 @@ begin
     Label3.Color := clNone
   else
     Label3.Color := clRed;
+  diff2 := SpinEdit7.Value;
 end;
 
 procedure TForm1.CheckListBox1ClickCheck(Sender: TObject);
