@@ -55,6 +55,7 @@ type
     procedure CheckListBox3ClickCheck(Sender: TObject);
     procedure FileSave(Source: integer);
     procedure LoadResources(Source: integer);
+    procedure CheckResources(Source: integer);
     procedure SaveResources(Source: integer);
     procedure UpdateStatusBar(Source: integer);
     procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent, ShowPercentOnly: boolean; var mp1: integer);
@@ -302,6 +303,7 @@ begin
   RecalcSpinEditPos(1);
   UpdateStatusBar(1);
   LoadResources(1);
+  CheckResources(1);
 end;
 
 procedure TForm1.FloatSpinEdit1Change(Sender: TObject);
@@ -614,6 +616,7 @@ begin
   vConfigurations.ReadFromFile(nil);
   vConfigurations.Save(nil);
   LoadResources(2);
+  CheckResources(2);
   SaveResources(2);
   UpdateStatusBar(2);
 end;
@@ -759,6 +762,46 @@ begin
     CheckListBox3.Items.CommaText := str1;
   finally
     MyFile.Free;
+  end;
+end;
+
+procedure TForm1.CheckResources(Source: integer);
+var
+  i, test1: integer;
+begin
+  test1 := 0;
+  i := 0;
+  while (i <= (CheckListBox1.Items.Count - 1)) do
+  begin
+    try
+      test1 := abs(StrToInt(CheckListBox1.Items[i]));
+      CheckListBox1.Items[i] := IntToStr(test1);
+      Inc(i);
+    except
+      CheckListBox1.Items.Delete(i);
+    end;
+  end;
+  i := 0;
+  while (i <= (CheckListBox2.Items.Count - 1)) do
+  begin
+    try
+      test1 := abs(StrToInt(CheckListBox2.Items[i]));
+      CheckListBox2.Items[i] := IntToStr(test1);
+      Inc(i);
+    except
+      CheckListBox2.Items.Delete(i);
+    end;
+  end;
+  i := 0;
+  while (i <= (CheckListBox3.Items.Count - 1)) do
+  begin
+    try
+      test1 := abs(StrToInt(CheckListBox3.Items[i]));
+      CheckListBox3.Items[i] := IntToStr(test1);
+      Inc(i);
+    except
+      CheckListBox3.Items.Delete(i);
+    end;
   end;
 end;
 
