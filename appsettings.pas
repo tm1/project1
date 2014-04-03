@@ -29,24 +29,45 @@ type
 
 var
   vConfigurations: TConfigurations;
+  DefaultShareDir: string;
+  DefaultConfigFilePath: string;
+  DefaultResourcesDir: string;
 
 implementation
 
-{$ifdef Win32}
-uses
-  Windows;
-{$endif}
+// {$ifdef Win32}
+// uses
+//   Windows;
+// {$endif}
 {$ifdef Darwin}
 uses
   MacOSAll;
 {$endif}
 
 const
-  DefaultDirectory = '/usr/share/project1/';
+  // DefaultDirectory = '/usr/share/project1/';
+{$ifdef Unix}
+  DefaultDirectoryPrefix = '/usr/share/';
+    {$ifdef Darwin}
   BundleResourcesDirectory = '/Contents/Resources/';
+    {$endif}
+{$endif}
+  ResourcesSubDirectory = 'Resources';
 
   SectionGeneral = 'General';
-  SectionUnix = 'UNIX';
+{$ifdef Win32}
+  SectionWindows = 'Windows';
+{$else}
+  {$ifdef Unix}
+    {$ifdef Darwin}
+  SectionDarwin = 'Darwin';
+    {$else}
+  SectionUnix = 'Unix';
+    {$endif}
+  {$else}
+  SectionOtherOS = 'OtherOS';
+  {$endif}
+{$endif}
 
   IdentResourcesPath = 'ResourcesPath';
 
@@ -54,12 +75,7 @@ const
 
 constructor TConfigurations.Create;
 begin
-{$ifdef win32}
-  ConfigFilePath := ExtractFilePath(Application.EXEName) + 'project1.ini';
-{$endif}
-{$ifdef Unix}
-  ConfigFilePath := GetAppConfigFile(False) + '.conf';
-{$endif}
+  ConfigFilePath := DefaultConfigFilePath;
   ResourcesPath := GetResourcesPath();
   ReadFromFile(nil);
 end;
@@ -74,11 +90,36 @@ procedure TConfigurations.Save(Sender: TObject);
 var
   MyFile: TIniFile;
 begin
+  try
+    if not DirectoryExists(ExtractFilePath(ConfigFilePath)) then
+      if not CreateDir(ExtractFilePath(ConfigFilePath)) then exit;
+  except
+    // CreateDir problem
+    exit;
+  end;
   MyFile := TIniFile.Create(ConfigFilePath);
   try
+{$ifdef Win32}
+    MyFile.WriteString(SectionWindows, IdentResourcesPath, ResourcesPath);
+{$else}
+  {$ifdef Unix}
+    {$ifdef Darwin}
+    MyFile.WriteString(SectionDarwin, IdentResourcesPath, ResourcesPath);
+    {$else}
     MyFile.WriteString(SectionUnix, IdentResourcesPath, ResourcesPath);
+    {$endif}
+  {$else}
+    MyFile.WriteString(SectionOtherOS, IdentResourcesPath, ResourcesPath);
+  {$endif}
+{$endif}
   finally
     MyFile.Free;
+  end;
+  try
+    if not DirectoryExists(ResourcesPath) then
+      if not CreateDir(ResourcesPath) then exit;
+  except
+    // CreateDir problem
   end;
 end;
 
@@ -91,11 +132,17 @@ begin
     // Here you can read other information from the config file
 
 {$ifdef Win32}
-    ResourcesPath := MyFile.ReadString(SectionUnix, IdentResourcesPath, ExtractFilePath(Application.EXEName));
+    ResourcesPath := MyFile.ReadString(SectionWindows, IdentResourcesPath, DefaultResourcesDir);
 {$else}
- {$ifndef darwin}
-    ResourcesPath := MyFile.ReadString(SectionUnix, IdentResourcesPath, DefaultDirectory);
- {$endif}
+  {$ifdef Unix}
+    {$ifdef Darwin}
+    ResourcesPath := MyFile.ReadString(SectionDarwin, IdentResourcesPath, DefaultResourcesDir);
+    {$else}
+    ResourcesPath := MyFile.ReadString(SectionUnix, IdentResourcesPath, DefaultResourcesDir);
+    {$endif}
+  {$else}
+    ResourcesPath := MyFile.ReadString(SectionOtherOS, IdentResourcesPath, DefaultResourcesDir);
+  {$endif}
 {$endif}
   finally
     MyFile.Free;
@@ -110,8 +157,11 @@ var
   pathStr: shortstring;
 {$endif}
 begin
-{$ifdef UNIX}
-{$ifdef Darwin}
+{$ifdef Win32}
+  Result := DefaultResourcesDir;
+{$else}
+  {$ifdef Unix}
+    {$ifdef Darwin}
   pathRef := CFBundleCopyBundleURL(CFBundleGetMainBundle());
   pathCFStr := CFURLCopyFileSystemPath(pathRef, kCFURLPOSIXPathStyle);
   CFStringGetPascalString(pathCFStr, @pathStr, 255, CFStringGetSystemEncoding());
@@ -119,18 +169,28 @@ begin
   CFRelease(pathCFStr);
 
   Result := pathStr + BundleResourcesDirectory;
-{$else}
-  Result := DefaultDirectory;
-{$endif}
-{$endif}
-
-{$ifdef Windows}
-  Result := ExtractFilePath(Application.EXEName);
+    {$else}
+  Result := DefaultResourcesDir;
+    {$endif}
+  {$else}
+  Result := DefaultResourcesDir;
+  {$endif}
 {$endif}
 end;
 
 initialization
 
+  DefaultConfigFilePath := GetAppConfigFile(False);
+{$ifdef Win32}
+  // DefaultShareDir = 'C:\Users\username\AppData\Local\project1\';
+  DefaultShareDir := GetAppConfigDir(False);
+{$else}
+  // DefaultShareDir = '/usr/share/project1/';
+  DefaultShareDir := DefaultDirectoryPrefix + ApplicationName + DirectorySeparator;
+{$endif}
+  // DefaultResourcesDir = 'C:\Users\username\AppData\Local\project1\Resources\';
+  // DefaultResourcesDir = '/usr/share/project1/Resources/';
+  DefaultResourcesDir := DefaultShareDir + ResourcesSubDirectory + DirectorySeparator;
   vConfigurations := TConfigurations.Create;
 
 finalization

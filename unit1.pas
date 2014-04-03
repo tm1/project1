@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ComCtrls,
-  CheckLst, StdCtrls, Grids, Spin, Math;
+  CheckLst, StdCtrls, Grids, Spin, Math, AppSettings;
 
 type
   TArray4IntValues = array [0..3] of integer;
@@ -291,6 +291,7 @@ begin
   filename1 := '';
   RecalcTrackbarPos(1);
   RecalcSpinEditPos(1);
+  StatusBar1.SimpleText := Format('Info: ConfigFilePath = [ %s ], ResourcesPath = [ %s ]', [vConfigurations.ConfigFilePath, vConfigurations.ResourcesPath]);
 end;
 
 procedure TForm1.FloatSpinEdit1Change(Sender: TObject);
