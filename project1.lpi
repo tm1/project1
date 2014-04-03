@@ -19,7 +19,7 @@
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="1"/>
       <RevisionNr Value="17"/>
-      <BuildNr Value="17"/>
+      <BuildNr Value="18"/>
       <StringTable ProductName="calc for price" ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="1">
@@ -40,7 +40,7 @@
         <PackageName Value="LCL"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="2">
+    <Units Count="3">
       <Unit0>
         <Filename Value="project1.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -54,6 +54,11 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit1"/>
       </Unit1>
+      <Unit2>
+        <Filename Value="appsettings.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="AppSettings"/>
+      </Unit2>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

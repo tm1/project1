@@ -23,6 +23,8 @@ object Form1: TForm1
     Width = 100
     Anchors = [akTop, akLeft, akBottom]
     Items.Strings = (
+      '800'
+      '900'
       '1000'
       '1100'
       '1200'
@@ -60,8 +62,8 @@ object Form1: TForm1
     OnClickCheck = CheckListBox1ClickCheck
     TabOrder = 4
     Data = {
-      1F00000000000000000000000000000000000000000000000000000000000000
-      000000
+      2100000000000000000000000000000000000000000000000000000000000000
+      0000000000
     }
   end
   object CheckListBox2: TCheckListBox
