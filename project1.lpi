@@ -19,7 +19,7 @@
       <AutoIncrementBuild Value="True"/>
       <MinorVersionNr Value="1"/>
       <RevisionNr Value="17"/>
-      <BuildNr Value="19"/>
+      <BuildNr Value="20"/>
       <StringTable ProductName="calc for price" ProductVersion=""/>
     </VersionInfo>
     <BuildModes Count="1">

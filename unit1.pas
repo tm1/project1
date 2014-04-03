@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, ComCtrls,
-  CheckLst, StdCtrls, Grids, Spin, Math, AppSettings;
+  CheckLst, StdCtrls, Grids, Spin, Math, AppSettings, IniFiles;
 
 type
   TArray4IntValues = array [0..3] of integer;
@@ -54,6 +54,8 @@ type
     procedure CheckListBox2ClickCheck(Sender: TObject);
     procedure CheckListBox3ClickCheck(Sender: TObject);
     procedure FileSave(Source: integer);
+    procedure LoadResources(Source: integer);
+    procedure SaveResources(Source: integer);
     procedure UpdateStatusBar(Source: integer);
     procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent, ShowPercentOnly: boolean; var mp1: integer);
     function ResolveTask(Source: integer; var r1count: integer; var r1: TDynArray7IntValues): integer;
@@ -80,6 +82,10 @@ type
     { public declarations }
   end;
 
+const
+  SectionResources = 'Resources';
+  IdentCheckListBox = 'CheckListBox';
+  ResourcesCheckListBox = 'CheckListBox.resource.ini';
 var
   Form1: TForm1;
   x1, x2, x3: integer; // x1 + x2 + x3 = 100;
@@ -295,6 +301,7 @@ begin
   RecalcTrackbarPos(1);
   RecalcSpinEditPos(1);
   UpdateStatusBar(1);
+  LoadResources(1);
 end;
 
 procedure TForm1.FloatSpinEdit1Change(Sender: TObject);
@@ -606,6 +613,8 @@ procedure TForm1.Button4Click(Sender: TObject);
 begin
   vConfigurations.ReadFromFile(nil);
   vConfigurations.Save(nil);
+  LoadResources(2);
+  SaveResources(2);
   UpdateStatusBar(2);
 end;
 
@@ -728,6 +737,55 @@ begin
   end
   else
     ShowMessageFmt('Error: No results to save to file - [ %s ]', [filename1]);
+end;
+
+procedure TForm1.LoadResources(Source: integer);
+var
+  MyFile: TIniFile;
+  MyFileName, ident1, str1: string;
+begin
+  MyFileName := vConfigurations.ResourcesPath + ResourcesCheckListBox;
+  MyFile := TIniFile.Create(MyFileName);
+  try
+    // Here you can read other information from the config file
+    ident1 := IdentCheckListBox + '1';
+    str1 := MyFile.ReadString(SectionResources, ident1, CheckListBox1.Items.CommaText);
+    CheckListBox1.Items.CommaText := str1;
+    ident1 := IdentCheckListBox + '2';
+    str1 := MyFile.ReadString(SectionResources, ident1, CheckListBox2.Items.CommaText);
+    CheckListBox2.Items.CommaText := str1;
+    ident1 := IdentCheckListBox + '3';
+    str1 := MyFile.ReadString(SectionResources, ident1, CheckListBox3.Items.CommaText);
+    CheckListBox3.Items.CommaText := str1;
+  finally
+    MyFile.Free;
+  end;
+end;
+
+procedure TForm1.SaveResources(Source: integer);
+var
+  MyFile: TIniFile;
+  MyFileName, ident1: string;
+begin
+  MyFileName := vConfigurations.ResourcesPath + ResourcesCheckListBox;
+  try
+    if not DirectoryExists(vConfigurations.ResourcesPath) then
+      if not CreateDir(vConfigurations.ResourcesPath) then exit;
+  except
+    // CreateDir problem
+    exit;
+  end;
+  MyFile := TIniFile.Create(MyFileName);
+  try
+    ident1 := IdentCheckListBox + '1';
+    MyFile.WriteString(SectionResources, ident1, CheckListBox1.Items.CommaText);
+    ident1 := IdentCheckListBox + '2';
+    MyFile.WriteString(SectionResources, ident1, CheckListBox2.Items.CommaText);
+    ident1 := IdentCheckListBox + '3';
+    MyFile.WriteString(SectionResources, ident1, CheckListBox3.Items.CommaText);
+  finally
+    MyFile.Free;
+  end;
 end;
 
 procedure TForm1.UpdateStatusBar(Source: integer);
