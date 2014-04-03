@@ -20,6 +20,7 @@ type
     Button1: TButton;
     Button2: TButton;
     Button3: TButton;
+    Button4: TButton;
     CheckBox1: TCheckBox;
     CheckListBox1: TCheckListBox;
     CheckListBox2: TCheckListBox;
@@ -45,6 +46,7 @@ type
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
+    procedure Button4Click(Sender: TObject);
     procedure CheckBox1Change(Sender: TObject);
     procedure CheckTask(Source: integer);
     procedure CheckData(Source: integer);
@@ -52,6 +54,7 @@ type
     procedure CheckListBox2ClickCheck(Sender: TObject);
     procedure CheckListBox3ClickCheck(Sender: TObject);
     procedure FileSave(Source: integer);
+    procedure UpdateStatusBar(Source: integer);
     procedure ShowMatrix(const r1count: integer; const r1: TDynArray7IntValues; const prc1, prc2, prc3: integer; const ShowPercent, ShowPercentOnly: boolean; var mp1: integer);
     function ResolveTask(Source: integer; var r1count: integer; var r1: TDynArray7IntValues): integer;
     function FindSolution2(const x1, x2, x3, s1, c1, s1diff: integer; var r2: TDynArray4IntValues; var r2count: integer): boolean;
@@ -291,7 +294,7 @@ begin
   filename1 := '';
   RecalcTrackbarPos(1);
   RecalcSpinEditPos(1);
-  StatusBar1.SimpleText := Format('Info: ConfigFilePath = [ %s ], ResourcesPath = [ %s ]', [vConfigurations.ConfigFilePath, vConfigurations.ResourcesPath]);
+  UpdateStatusBar(1);
 end;
 
 procedure TForm1.FloatSpinEdit1Change(Sender: TObject);
@@ -599,6 +602,13 @@ begin
   FileSave(2);
 end;
 
+procedure TForm1.Button4Click(Sender: TObject);
+begin
+  vConfigurations.ReadFromFile(nil);
+  vConfigurations.Save(nil);
+  UpdateStatusBar(2);
+end;
+
 procedure TForm1.CheckBox1Change(Sender: TObject);
 begin
   RecalcTrackbarPos(7);
@@ -718,6 +728,11 @@ begin
   end
   else
     ShowMessageFmt('Error: No results to save to file - [ %s ]', [filename1]);
+end;
+
+procedure TForm1.UpdateStatusBar(Source: integer);
+begin
+  StatusBar1.SimpleText := Format('Info: ConfigFilePath = [ %s ], ResourcesPath = [ %s ]', [vConfigurations.ConfigFilePath, vConfigurations.ResourcesPath]);
 end;
 
 end.
